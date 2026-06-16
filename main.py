@@ -1,5 +1,5 @@
 """
-AI多维度出题系统 - 使用示例
+AI多维度出题系统 - 使用示例（销售培训版）
 基于LLM Prompt的智能出题引擎，支持同一知识点多角度变体生成
 
 运行方式：
@@ -18,9 +18,9 @@ from generator import create_generator, AIQuestionGenerator
 
 
 def demo_single_question():
-    """演示1：为单个学生生成一道题"""
+    """演示1：为单个学员生成一道销售培训题"""
     print("=" * 60)
-    print("【演示1】为单个学生生成一道题")
+    print("【演示1】为单个学员生成一道销售培训题")
     print("=" * 60)
 
     # 使用 create_generator 工厂方法，自动从 .env 读取 DEEPSEEK_API_KEY
@@ -30,10 +30,10 @@ def demo_single_question():
     )
 
     question = gen.generate_question(
-        knowledge_point="Python列表推导式与生成器表达式的区别",
-        student_id="stu_001",
-        course_name="Python高级编程",
-        special_requirements="出选择题，重点考查内存效率方面的理解",
+        knowledge_point="SPIN提问法中的需求隐含问题（Implication Question）",
+        student_id="trainee_001",
+        course_name="顾问式销售实战训练",
+        special_requirements="出单选题，重点考查如何通过隐含问题挖掘客户痛点",
     )
 
     _print_question(question)
@@ -44,7 +44,7 @@ def demo_batch_class():
     """演示2：为全班批量出题（防抄袭核心场景）"""
     print("")
     print("=" * 60)
-    print("【演示2】为全班批量出题（防抄袭）")
+    print("【演示2】为全班学员批量出题（防抄袭）")
     print("=" * 60)
 
     gen = create_generator(
@@ -52,18 +52,19 @@ def demo_batch_class():
         temperature=0.8,
     )
 
-    class_students = ["stu_001", "stu_002", "stu_003", "stu_004", "stu_005"]
+    # 模拟一个销售培训班的5名学员
+    class_trainees = ["trainee_001", "trainee_002", "trainee_003", "trainee_004", "trainee_005"]
 
     result = gen.batch_generate(
-        knowledge_point="Python列表推导式与生成器表达式的区别",
-        class_students=class_students,
-        course_name="Python高级编程",
+        knowledge_point="处理客户"价格太贵"异议的技巧与方法",
+        class_students=class_trainees,
+        course_name="销售异议处理专项训练",
     )
 
     print("")
     print(f"📊 出题统计：")
     print(f"   知识点：{result.knowledge_point}")
-    print(f"   学生总数：{result.total_students}")
+    print(f"   学员总数：{result.total_students}")
     print(f"   使用不同维度数：{result.unique_dimensions_used}")
     print(f"   生成不同题目数：{result.unique_questions_generated}")
 
@@ -86,28 +87,29 @@ def demo_batch_class():
 
 
 def demo_multi_knowledge_points():
-    """演示3：多个知识点的批量出题"""
+    """演示3：多个销售知识点的批量出题"""
     print("")
     print("=" * 60)
-    print("【演示3】多知识点批量出题")
+    print("【演示3】多知识点批量出题（销售培训课程体系）")
     print("=" * 60)
 
     gen = create_generator(model="deepseek-chat", temperature=0.8)
 
+    # 销售培训核心知识点
     knowledge_points = [
-        "Python装饰器的原理与应用",
-        "SQL索引的底层实现原理（B+树）",
-        "Redis与MySQL数据一致性的解决方案",
-        "微服务架构中的服务熔断机制",
+        "客户画像与需求分析方法",
+        "FABE法则在产品介绍中的应用",
+        "大客户销售的信任建立策略",
+        "成交信号识别与逼单时机把握",
     ]
 
-    student_id = "stu_demo"
+    trainee_id = "trainee_demo"
 
     for kp in knowledge_points:
         print(f"\n--- 知识点：{kp} ---")
         q = gen.generate_question(
             knowledge_point=kp,
-            student_id=student_id,
+            student_id=trainee_id,
             excluded_questions=[],
             excluded_dimensions=[],
         )
@@ -127,9 +129,9 @@ def _print_question(question, verbose=True):
     print(f"\n   【题干】")
     print(f"   {question.stem}")
 
-    if question.code_snippet:
-        print(f"\n   【代码片段】")
-        for line in question.code_snippet.split("\n"):
+    if hasattr(question, 'case_scenario') and question.case_scenario:
+        print(f"\n   【案例/场景】")
+        for line in question.case_scenario.split("\n"):
             print(f"     {line}")
 
     if question.options:
@@ -148,11 +150,11 @@ def _print_question(question, verbose=True):
 
 if __name__ == "__main__":
     print("🚀 AI多维度出题系统 - 使用示例")
-    print("   方案B：基于LLM Prompt的多维度动态生成（DeepSeek）")
+    print("   方案B：基于LLM Prompt的多维度动态生成（DeepSeek + 销售培训版）")
     print()
 
     try:
-        # 演示1：单学生出题
+        # 演示1：单学员出题
         demo_single_question()
 
         # 演示2：全班批量出题（防抄袭）
