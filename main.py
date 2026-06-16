@@ -3,12 +3,17 @@ AI多维度出题系统 - 使用示例
 基于LLM Prompt的智能出题引擎，支持同一知识点多角度变体生成
 
 运行方式：
-    1. 安装依赖：pip install openai pydantic
-    2. 设置环境变量：export OPENAI_API_KEY="your-api-key"
+    1. 安装依赖：pip install openai pydantic python-dotenv
+    2. 复制 .env 文件并填入你的 DeepSeek API Key
     3. 运行：python main.py
 """
 
 import os
+from dotenv import load_dotenv
+
+# 加载 .env 环境变量文件（必须！否则 os.getenv 读不到 .env 中的值）
+load_dotenv()
+
 from generator import create_generator, AIQuestionGenerator
 
 
@@ -18,9 +23,9 @@ def demo_single_question():
     print("【演示1】为单个学生生成一道题")
     print("=" * 60)
 
+    # 使用 create_generator 工厂方法，自动从 .env 读取 DEEPSEEK_API_KEY
     gen = create_generator(
-        api_key=os.getenv("OPENAI_API_KEY", "your-api-key"),
-        model="gpt-4o",
+        model="deepseek-chat",
         temperature=0.8,
     )
 
@@ -43,12 +48,10 @@ def demo_batch_class():
     print("=" * 60)
 
     gen = create_generator(
-        api_key=os.getenv("OPENAI_API_KEY", "your-api-key"),
-        model="gpt-4o",
+        model="deepseek-chat",
         temperature=0.8,
     )
 
-    # 模拟一个班级的5个学生
     class_students = ["stu_001", "stu_002", "stu_003", "stu_004", "stu_005"]
 
     result = gen.batch_generate(
@@ -57,7 +60,6 @@ def demo_batch_class():
         course_name="Python高级编程",
     )
 
-    # 打印全班试卷分配情况
     print("")
     print(f"📊 出题统计：")
     print(f"   知识点：{result.knowledge_point}")
@@ -72,7 +74,6 @@ def demo_batch_class():
               f"题型={q.question_type.value:4s} | "
               f"ID={q.question_id}")
 
-    # 验证防抄袭效果
     dimensions_used = [q.dimension.value for q in result.papers.values()]
     unique_dims = set(dimensions_used)
     print(f"\n✅ 防抄袭验证：")
@@ -91,11 +92,7 @@ def demo_multi_knowledge_points():
     print("【演示3】多知识点批量出题")
     print("=" * 60)
 
-    gen = create_generator(
-        api_key=os.getenv("OPENAI_API_KEY", "your-api-key"),
-        model="gpt-4o",
-        temperature=0.8,
-    )
+    gen = create_generator(model="deepseek-chat", temperature=0.8)
 
     knowledge_points = [
         "Python装饰器的原理与应用",
@@ -151,11 +148,9 @@ def _print_question(question, verbose=True):
 
 if __name__ == "__main__":
     print("🚀 AI多维度出题系统 - 使用示例")
-    print("   方案B：基于LLM Prompt的多维度动态生成")
+    print("   方案B：基于LLM Prompt的多维度动态生成（DeepSeek）")
     print()
 
-    # 运行各个演示（可根据需要注释/取消注释）
-    
     try:
         # 演示1：单学生出题
         demo_single_question()
@@ -168,5 +163,10 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"\n❌ 运行出错: {e}")
-        print("提示：请确保已设置 OPENAI_API_KEY 环境变量")
-        print("   export OPENAI_API_KEY='your-api-key'")
+        print("\n请检查以下配置：")
+        print("  1. 已安装依赖：pip install openai pydantic python-dotenv")
+        print("  2. .env 文件中 DEEPSEEK_API_KEY 已填入真实 Key")
+        print("     获取地址：https://platform.deepseek.com/")
+        print("  3. 当前读取到的环境变量：")
+        print(f"     DEEPSEEK_API_KEY = {os.getenv('DEEPSEEK_API_KEY', '❌ 未设置')[:20]}...")
+        print(f"     DEEPSEEK_BASE_URL = {os.getenv('DEEPSEEK_BASE_URL', '❌ 未设置')}")
