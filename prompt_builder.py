@@ -18,7 +18,7 @@ from models import (
 class PromptBuilder:
     """
     多维度Prompt构造器 - 方案B的核心组件
-    
+
     设计理念：
     1. 系统Prompt定义出题原则和质量标准
     2. 用户Prompt根据上下文动态构造，包含差异化指令
@@ -100,7 +100,7 @@ class PromptBuilder:
     def build_user_prompt(self, context: GenerationContext) -> tuple:
         """
         根据上下文动态构造用户Prompt
-        
+
         Returns:
             tuple: (prompt_text, selected_dimension) 返回构造好的Prompt和选中的维度
         """
@@ -192,8 +192,7 @@ class PromptBuilder:
         if context.special_requirements:
             lines.append(f"- 特殊要求：{context.special_requirements}")
 
-        return "
-".join(lines)
+        return "\n".join(lines)
 
     @staticmethod
     def _get_dimension_description(dimension: QuestionDimension) -> str:
@@ -212,7 +211,7 @@ class PromptBuilder:
     def _build_variation_instruction(self, context: GenerationContext) -> str:
         """
         构建变体指令 - 这是防抄袭的核心
-        
+
         基于学生ID生成确定性但差异化的变体要求，
         确保同一学生每次稳定，不同学生之间差异大
         """
@@ -237,15 +236,14 @@ class PromptBuilder:
             "正确答案的位置（A/B/C/D）要随机化",
         ])
 
-        return "
-".join(f"- {inst}" for inst in instructions)
+        return "\n".join(f"- {inst}" for inst in instructions)
 
     @staticmethod
     def _summarize_excluded(excluded: List[str]) -> str:
         """对已出题目做摘要，防止Prompt过长导致token超限"""
         if not excluded:
             return "暂无已出题目"
-        
+
         # 在生产环境中，这里可以用embedding做语义去重摘要
         # 这里简化为返回最近5道的ID指纹
         recent = excluded[-5:]
@@ -253,5 +251,4 @@ class PromptBuilder:
         for qid in recent:
             display_id = qid[:16] + "..." if len(qid) > 16 else qid
             lines.append(f"- 已出题ID: {display_id}")
-        return "
-".join(lines) if lines else "暂无已出题目"
+        return "\n".join(lines) if lines else "暂无已出题目"
