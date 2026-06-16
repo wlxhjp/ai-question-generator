@@ -23,14 +23,13 @@ def demo_single_question():
     print("【演示1】为单个学员生成一道销售培训题")
     print("=" * 60)
 
-    # 使用 create_generator 工厂方法，自动从 .env 读取 DEEPSEEK_API_KEY
     gen = create_generator(
         model="deepseek-chat",
         temperature=0.8,
     )
 
     question = gen.generate_question(
-        knowledge_point="SPIN提问法中的需求隐含问题（Implication Question）",
+        knowledge_point='SPIN提问法中的需求隐含问题（Implication Question）',
         student_id="trainee_001",
         course_name="顾问式销售实战训练",
         special_requirements="出单选题，重点考查如何通过隐含问题挖掘客户痛点",
@@ -52,11 +51,10 @@ def demo_batch_class():
         temperature=0.8,
     )
 
-    # 模拟一个销售培训班的5名学员
     class_trainees = ["trainee_001", "trainee_002", "trainee_003", "trainee_004", "trainee_005"]
 
     result = gen.batch_generate(
-        knowledge_point="处理客户"价格太贵"异议的技巧与方法",
+        knowledge_point='处理客户"价格太贵"异议的技巧与方法',
         class_students=class_trainees,
         course_name="销售异议处理专项训练",
     )
@@ -95,7 +93,6 @@ def demo_multi_knowledge_points():
 
     gen = create_generator(model="deepseek-chat", temperature=0.8)
 
-    # 销售培训核心知识点
     knowledge_points = [
         "客户画像与需求分析方法",
         "FABE法则在产品介绍中的应用",
@@ -154,13 +151,8 @@ if __name__ == "__main__":
     print()
 
     try:
-        # 演示1：单学员出题
         demo_single_question()
-
-        # 演示2：全班批量出题（防抄袭）
         # demo_batch_class()
-
-        # 演示3：多知识点出题
         # demo_multi_knowledge_points()
 
     except Exception as e:
