@@ -11,7 +11,6 @@ AI多维度出题系统 - 使用示例（销售培训版）
 import os
 from dotenv import load_dotenv
 
-# 加载 .env 环境变量文件（必须！否则 os.getenv 读不到 .env 中的值）
 load_dotenv()
 
 from generator import create_generator, AIQuestionGenerator
@@ -59,6 +58,7 @@ def demo_batch_class():
         course_name="销售异议处理专项训练",
     )
 
+    # 打印统计摘要
     print("")
     print(f"📊 出题统计：")
     print(f"   知识点：{result.knowledge_point}")
@@ -66,6 +66,7 @@ def demo_batch_class():
     print(f"   使用不同维度数：{result.unique_dimensions_used}")
     print(f"   生成不同题目数：{result.unique_questions_generated}")
 
+    # 打印全班试卷分配详情
     print(f"\n📋 全班试卷分配详情：")
     for sid, q in result.papers.items():
         print(f"   {sid}: 维度={q.dimension.value:6s} | "
@@ -80,6 +81,16 @@ def demo_batch_class():
 
     question_ids = set(q.question_id for q in result.papers.values())
     print(f"   生成了 {len(question_ids)} 道不同的题目（无重复）")
+
+    # ===== 新增：输出每个学员的完整题目内容 =====
+    print("\n" + "=" * 60)
+    print("📝 各学员完整题目详情")
+    print("=" * 60)
+    for idx, (sid, q) in enumerate(result.papers.items(), 1):
+        print(f"\n{'─' * 60}")
+        print(f"  【第{idx}题】学员: {sid}")
+        print(f"{'─' * 60}")
+        _print_question(q, verbose=True)
 
     return result
 
@@ -152,7 +163,7 @@ if __name__ == "__main__":
 
     try:
         demo_single_question()
-        # demo_batch_class()
+        demo_batch_class()
         # demo_multi_knowledge_points()
 
     except Exception as e:
