@@ -1,6 +1,10 @@
 """
 AI多维度出题系统 - 核心出题引擎（方案B完整实现）
 基于LLM Prompt的智能出题引擎，支持同一知识点多角度变体生成
+
+支持模型：
+- DeepSeek（默认）：deepseek-chat / deepseek-reasoner
+- OpenAI：gpt-4o / gpt-4（需手动指定 base_url 和 model）
 """
 
 import json
@@ -42,7 +46,7 @@ class AIQuestionGenerator:
         self,
         api_key: str,
         base_url: Optional[str] = None,
-        model: str = "gpt-4o",
+        model: str = "deepseek-chat",
         temperature: float = 0.8,
         max_retries: int = 3,
     ):
@@ -158,13 +162,12 @@ class AIQuestionGenerator:
                 knowledge_point=knowledge_point,
                 student_id=student_id,
                 course_name=course_name,
-                excluded_dimensions=list(used_dimensions),  # 传递已用维度
+                excluded_dimensions=list(used_dimensions),
                 **kwargs,
             )
             papers[student_id] = question
             used_dimensions.append(question.dimension.value)
 
-        # 统计结果
         unique_dims = len(set(q.dimension.value for q in papers.values()))
         unique_qs = len(set(q.question_id for q in papers.values()))
 
@@ -176,21 +179,13 @@ class AIQuestionGenerator:
             papers=papers,
         )
 
-    # ==================== 内部方法 ====================
-
     @staticmethod
     def _compute_seed(
         student_id: Optional[str],
         class_id: Optional[str],
         knowledge_point: str,
     ) -> int:
-        """计算确定性种子值
-        
-        用途：
-        - 同一学生每天拿到稳定题目（方便续考/重考）
-        - 不同学生拿到不同变体
-        - 同班学生的参数差异最大化
-        """
+        """计算确定性种子值"""
         seed_str = f"{student_id or 'anonymous'}_{class_id or 'default'}_{knowledge_point}"
         seed_str += f"_{time.strftime('%Y%m%d')}"
         return int(hashlib.sha256(seed_str.encode()).hexdigest()[:16], 16)
@@ -198,14 +193,12 @@ class AIQuestionGenerator:
     @staticmethod
     def _parse_response(raw: str) -> Optional[dict]:
         """解析LLM返回的JSON字符串"""
-        # 清理可能的markdown代码块标记
         cleaned = re.sub(r'^```(?:json)?\s*', '', raw.strip())
         cleaned = re.sub(r'\s*```$', '', cleaned)
         
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            # 尝试提取第一个完整的JSON对象
             match = re.search(r'\{.*\}', cleaned, re.DOTALL)
             if match:
                 try:
@@ -224,14 +217,12 @@ class AIQuestionGenerator:
         if not parsed:
             return None
 
-        # 检查必填字段
         required_fields = ["question_stem", "correct_answer", "explanation"]
         for field in required_fields:
             if not parsed.get(field):
                 print(f"校验失败：缺少必填字段 '{field}'")
                 return None
 
-        # 生成唯一ID和试卷指纹
         fingerprint_raw = (
             f"{context.knowledge_point}_"
             f"{parsed['question_stem'][:20]}_"
@@ -239,7 +230,6 @@ class AIQuestionGenerator:
         )
         fingerprint = hashlib.md5(fingerprint_raw.encode()).hexdigest()[:8]
 
-        # 解析枚举值（容错处理）
         dim_value = parsed.get("dimension", dimension.value)
         resolved_dim = self._resolve_enum(QuestionDimension, dim_value, QuestionDimension.CONCEPT)
 
@@ -269,7 +259,6 @@ class AIQuestionGenerator:
         for item in enum_class:
             if item.value == value or item.name == value:
                 return item
-        # 模糊匹配
         for item in enum_class:
             if value in item.value or item.value in value:
                 return item
@@ -280,14 +269,7 @@ class AIQuestionGenerator:
         knowledge_point: str,
         context: GenerationContext,
     ) -> QuestionVariant:
-        """
-        LLM调用失败时的降级方案
-        
-        生产环境中可替换为：
-        1. 从预置模板库中选取
-        2. 返回缓存的历史题目
-        3. 使用规则引擎生成基础题目
-        """
+        """LLM调用失败时的降级方案"""
         ts = int(time.time())
         return QuestionVariant(
             question_id=f"fallback_{ts}",
@@ -308,21 +290,22 @@ class AIQuestionGenerator:
         )
 
 
-# ==================== 工厂方法 ====================
-
 def create_generator(
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
-    model: str = "gpt-4o",
+    model: str = "deepseek-chat",
     temperature: float = 0.8,
 ) -> AIQuestionGenerator:
     """
-    工厂方法：创建出题引擎实例
+    工厂方法：创建出题引擎实例（默认使用 DeepSeek）
     
     Args:
-        api_key: OpenAI API Key。如未提供则从环境变量 OPENAI_API_KEY 读取
-        base_url: API基础URL（用于兼容其他OpenAI兼容服务）
-        model: 模型名称
+        api_key: API Key。如未提供则从环境变量 DEEPSEEK_API_KEY 读取
+        base_url: API基础URL。
+                   默认使用 DeepSeek API：https://api.deepseek.com/v1
+                   如需使用 OpenAI，传入 https://api.openai.com/v1
+        model: 模型名称。默认 deepseek-chat
+               可选：deepseek-chat / deepseek-reasoner / gpt-4o 等
         temperature: 生成温度（越高越多样）
 
     Returns:
@@ -330,15 +313,18 @@ def create_generator(
     """
     import os
 
-    key = api_key or os.environ.get("OPENAI_API_KEY")
+    key = api_key or os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if not key:
         raise ValueError(
-            "未提供API Key。请通过参数传入或设置环境变量 OPENAI_API_KEY"
+            "未提供API Key。请通过参数传入或设置环境变量 DEEPSEEK_API_KEY / OPENAI_API_KEY"
         )
+
+    # 默认使用 DeepSeek API
+    url = base_url or os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
 
     return AIQuestionGenerator(
         api_key=key,
-        base_url=base_url,
+        base_url=url,
         model=model,
         temperature=temperature,
     )
