@@ -1,5 +1,5 @@
 """
-AI多维度出题系统 - 数据模型定义
+AI多维度出题系统 - 数据模型定义（销售培训版）
 基于LLM Prompt的智能出题引擎，支持同一知识点多角度变体生成
 """
 
@@ -19,18 +19,18 @@ class KnowledgeLevel(str, Enum):
 
 class QuestionDimension(str, Enum):
     """
-    提问角度维度 - 同一知识点的不同考查方向
+    提问角度维度 - 同一知识点的不同考查方向（销售培训场景）
     
     核心防抄袭机制：不同学生从不同维度被提问，
     即使知识点相同，题目也完全不同
     """
-    CONCEPT = "概念理解"              # 考查定义、原理、适用场景
-    CODE_COMPLETION = "代码补全"      # 给不完整代码，填关键逻辑
-    OUTPUT_PREDICTION = "输出预测"     # 给代码，问运行结果
-    DEBUGGING = "错误排查"            # 给有bug的代码，找问题
-    PERFORMANCE = "性能对比"          # 比较不同实现方式的效率
-    DESIGN_CHOICE = "方案选型"        # 给需求场景，选技术方案
-    SCENARIO_APPLICATION = "场景应用"  # 知识点放到实际业务场景
+    CONCEPT = "概念理解"              # 考查定义、原理、适用场景（如：什么是SPIN提问法）
+    CASE_ANALYSIS = "案例分析"        # 给真实/模拟销售案例，分析关键点
+    ROLE_PLAY = "情景演练"            # 给客户对话场景，考查话术应对能力
+    OBJECTION_HANDLING = "异议处理"   # 给客户拒绝/异议，要求给出处理方案
+    TECHNIQUE_COMPARISON = "技巧对比"  # 比较不同销售技巧/方法的适用场景和效果
+    SCENARIO_CHOICE = "场景选型"      # 给具体业务场景，选择最合适的销售策略
+    PRACTICE_APPLICATION = "实战应用"  # 将销售知识点放到实际工作场景中考查
 
 
 class QuestionType(str, Enum):
@@ -40,8 +40,8 @@ class QuestionType(str, Enum):
     JUDGE = "判断题"
     FILL_BLANK = "填空题"
     SHORT_ANSWER = "简答题"
-    CODE_FILL = "代码填空题"
-    DEBUG_FIX = "改错题"
+    CASE_FILL = "案例分析题"
+    DIALOGUE_FIX = "话术补全题"
 
 
 class QuestionVariant(BaseModel):
@@ -61,7 +61,7 @@ class QuestionVariant(BaseModel):
     difficulty: KnowledgeLevel = Field(description="难度级别")
     question_type: QuestionType = Field(description="题型")
     stem: str = Field(description="题干内容")
-    code_snippet: Optional[str] = Field(default=None, description="代码片段（可选）")
+    case_scenario: Optional[str] = Field(default=None, description="案例/场景描述（可选）")
     options: Optional[List[str]] = Field(default=None, description="选项列表")
     correct_answer: str = Field(description="正确答案")
     explanation: str = Field(description="答案解析")
