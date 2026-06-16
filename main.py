@@ -37,7 +37,8 @@ def demo_single_question():
 
 def demo_batch_class():
     """演示2：为全班批量出题（防抄袭核心场景）"""
-    print("\n" + "=" * 60)
+    print("")
+    print("=" * 60)
     print("【演示2】为全班批量出题（防抄袭）")
     print("=" * 60)
 
@@ -57,7 +58,8 @@ def demo_batch_class():
     )
 
     # 打印全班试卷分配情况
-    print(f"\n📊 出题统计：")
+    print("")
+    print(f"📊 出题统计：")
     print(f"   知识点：{result.knowledge_point}")
     print(f"   学生总数：{result.total_students}")
     print(f"   使用不同维度数：{result.unique_dimensions_used}")
@@ -84,7 +86,8 @@ def demo_batch_class():
 
 def demo_multi_knowledge_points():
     """演示3：多个知识点的批量出题"""
-    print("\n" + "=" * 60)
+    print("")
+    print("=" * 60)
     print("【演示3】多知识点批量出题")
     print("=" * 60)
 
@@ -108,7 +111,7 @@ def demo_multi_knowledge_points():
         q = gen.generate_question(
             knowledge_point=kp,
             student_id=student_id,
-            excluded_questions=[],  # 每个知识点独立
+            excluded_questions=[],
             excluded_dimensions=[],
         )
         _print_question(q, verbose=False)
@@ -129,8 +132,7 @@ def _print_question(question, verbose=True):
 
     if question.code_snippet:
         print(f"\n   【代码片段】")
-        for line in question.code_snippet.split("
-"):
+        for line in question.code_snippet.split("\n"):
             print(f"     {line}")
 
     if question.options:
@@ -143,8 +145,7 @@ def _print_question(question, verbose=True):
 
     if verbose:
         print(f"\n   【解析】")
-        for line in question.explanation.split("
-"):
+        for line in question.explanation.split("\n"):
             print(f"   {line}")
 
 
