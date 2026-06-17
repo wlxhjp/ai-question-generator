@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from generator import create_generator, AIQuestionGenerator
+from models import QuestionDimension
 
 
 def demo_single_question():
@@ -39,7 +40,7 @@ def demo_single_question():
 
 
 def demo_batch_class():
-    """演示2：为全班批量出题（防抄袭核心场景）"""
+    """演示2：为全班批量出题（防抄袭核心场景）- 每道题显示完整内容"""
     print("")
     print("=" * 60)
     print("【演示2】为全班学员批量出题（防抄袭）")
@@ -66,14 +67,14 @@ def demo_batch_class():
     print(f"   使用不同维度数：{result.unique_dimensions_used}")
     print(f"   生成不同题目数：{result.unique_questions_generated}")
 
-    # 打印全班试卷分配详情
-    print(f"\n📋 全班试卷分配详情：")
-    for sid, q in result.papers.items():
-        print(f"   {sid}: 维度={q.dimension.value:6s} | "
-              f"难度={q.difficulty.value:2s} | "
-              f"题型={q.question_type.value:4s} | "
-              f"ID={q.question_id}")
+    # ====== 修复：逐个输出每道题的完整内容 ======
+    for idx, (sid, q) in enumerate(result.papers.items(), 1):
+        print(f"\n{'='*60}")
+        print(f"📋 学员 {sid} 的试卷（第{idx}/{len(result.papers)}份）")
+        print(f"{'='*60}")
+        _print_question(q, verbose=True)
 
+    # 防抄袭验证
     dimensions_used = [q.dimension.value for q in result.papers.values()]
     unique_dims = set(dimensions_used)
     print(f"\n✅ 防抄袭验证：")
@@ -81,16 +82,6 @@ def demo_batch_class():
 
     question_ids = set(q.question_id for q in result.papers.values())
     print(f"   生成了 {len(question_ids)} 道不同的题目（无重复）")
-
-    # ===== 新增：输出每个学员的完整题目内容 =====
-    print("\n" + "=" * 60)
-    print("📝 各学员完整题目详情")
-    print("=" * 60)
-    for idx, (sid, q) in enumerate(result.papers.items(), 1):
-        print(f"\n{'─' * 60}")
-        print(f"  【第{idx}题】学员: {sid}")
-        print(f"{'─' * 60}")
-        _print_question(q, verbose=True)
 
     return result
 
@@ -122,6 +113,64 @@ def demo_multi_knowledge_points():
             excluded_dimensions=[],
         )
         _print_question(q, verbose=False)
+
+
+def demo_all_dimensions():
+    """
+    演示4（新增）：对同一个知识点，从7个维度各出一道题
+    
+    这是本系统的核心能力展示 - 同一知识点，多维考查，避免抄作业
+    """
+    print("")
+    print("=" * 70)
+    print("【演示4】全维度出题 - 同一知识点 × 7个提问维度")
+    print("=" * 70)
+
+    gen = create_generator(model="deepseek-chat", temperature=0.8)
+
+    # 在这里修改你想考查的知识点 👇
+    knowledge_point = "处理客户'价格太贵'异议的技巧与方法"
+
+    print(f"\n📌 目标知识点：{knowledge_point}")
+    print(f"📌 将从以下 {len(list(QuestionDimension))} 个维度各生成1道题：\n")
+
+    questions = []
+    used_dimensions = []
+
+    for dimension in list(QuestionDimension):
+        print(f"{'─'*50}")
+        print(f"🔷 正在生成 [{dimension.value}] 维度的题目...")
+        print(f"{'─'*50}")
+
+        try:
+            q = gen.generate_question(
+                knowledge_point=knowledge_point,
+                student_id="demo_all_dims",
+                excluded_questions=[q.question_id for q in questions],
+                excluded_dimensions=used_dimensions,
+            )
+            questions.append(q)
+            used_dimensions.append(dimension.value)
+            _print_question(q, verbose=True)
+
+            # 稍微间隔，避免API限流
+            import time
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"❌ [{dimension.value}] 维度生成失败: {e}")
+
+    # 最终汇总
+    print(f"\n{'='*70}")
+    print(f"📊 全维度出题汇总")
+    print(f"{'='*70}")
+    print(f"   知识点：{knowledge_point}")
+    print(f"   成功生成：{len(questions)}/{len(list(QuestionDimension))} 道")
+    print(f"   覆盖维度：{used_dimensions}")
+    print(f"\n💡 核心价值：同一知识点从{len(used_dimensions)}个不同角度考查，"
+          f"即使学员之间互相参考答案也无法直接抄袭！")
+
+    return questions
 
 
 def _print_question(question, verbose=True):
@@ -162,9 +211,17 @@ if __name__ == "__main__":
     print()
 
     try:
+        # 演示1：单学员出1道题
         demo_single_question()
-        demo_batch_class()
+
+        # 演示2：全班批量出题（每道题显示完整内容）
+        # demo_batch_class()
+
+        # 演示3：多知识点出题
         # demo_multi_knowledge_points()
+
+        # 演示4（新增）：全维度出题 - 同一知识点×7个维度各出一道题
+        # demo_all_dimensions()
 
     except Exception as e:
         print(f"\n❌ 运行出错: {e}")
